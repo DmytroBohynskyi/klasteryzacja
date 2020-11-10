@@ -81,7 +81,7 @@ Wyniki możemy zobaczyć poniższych rysunkach:
 
 Fuzzy: klas-15, wymiar-2 | Fuzzy: klas-2, wymiar-9
 :-------------------------------------:|:-------------------------:
-![alt-text-1](images/Fuzzy c_means_2_2.png "Fuzzy: klas-15, wymiar-2 ") | ![alt-text-2](images/Fuzzy_means_9_9.png "Fuzzy: klas-2, wymiar-9")
+![alt-text-1](images/Fuzzy_means_2_2.png "Fuzzy: klas-15, wymiar-2 ") | ![alt-text-2](images/Fuzzy_means_9_9.png "Fuzzy: klas-2, wymiar-9")
 
 
 ### Machine learning
