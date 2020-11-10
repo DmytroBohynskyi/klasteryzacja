@@ -1,8 +1,7 @@
 """
 Dmytro Bohynskyi 171699
 
-usage: main.py [-h] [-n N] [-p] [-l L] [-save SAVE] [-km] [-kr] [-som]
-               [-u {S1,Breast}]
+usage: main.py [-h] [-n N] [-p] [-l L] [-save] [-km] [-kr] [-som] [-f] [-u {S1,Breast}]
 
 List the options:
 
@@ -11,24 +10,20 @@ optional arguments:
   -n N            number of clusters, default [2], max 15
   -p              Plot results.
   -l L            Learn neural network, epochs number
-  -save SAVE      Save dana in csv
+  -save           Save dana in csv
   -km, --kmeans   Use K-means algorithm
   -kr, --keras    Use neural network from keras libraries
   -som, --som     Use SOM algorithm - Self-organizing feature map
-  -u {S1,Breast}  Data: S1 - get data with
-                  'http://cs.joensuu.fi/sipu/datasets/s1.txt'; Breast - get
-                  data with 'http://cs.joensuu.fi/sipu/datasets/breast.txt'
-                  ;Default: S1
+  -f, --fuzzy     Use SOM algorithm - Self-organizing feature map
+  -u {S1,Breast}  Data: S1 - get data with 'http://cs.joensuu.fi/sipu/datasets/s1.txt'; Breast - get data with 'http://cs.joensuu.fi/sipu/datasets/breast.txt' ;Default: S1
 """
+
 import argparse
 import io
 
 import pandas as pd
 import requests
-
-from scrips.Centroid import initialize
 from scrips.K_means import K_means
-from scrips import Network
 from scrips.Network import AI
 
 URL = {
@@ -37,35 +32,63 @@ URL = {
 }
 
 
+def get_data(url):
+    url, space, path = URL.get(url)
+    r = requests.get(url)
+    # read data
+    i = io.StringIO(r.text)
+    data = pd.read_csv(i, sep=space, header=None)
+    data = data.to_numpy()
+
+    return url, space, path, data
+
+
+def k_means(data, arg):
+    # call the initialize function to get the centroids
+    k_object = K_means(data, classes_num=arg.n, plot=arg.p)
+    k_object.fuzzy()
+    # start of segmentation
+    k_object.plot() if arg.p else None
+
+
+def fuzzy(data, arg):
+    # call the initialize function to get the centroids
+    k_object = K_means(data, classes_num=arg.n, plot=arg.p)
+    # start of segmentation
+    k_object.fuzzy()
+    k_object.plot() if arg.p else None
+
+
+def keras(path):
+    ai_object = AI()
+    ai_object.read_db(path)
+
+    ai_object.machine_learning(epochs=arg.l) if arg.l else None
+    # start of segmentation
+    ai_object.classification(algorithm="keras") if arg.keras else None
+    ai_object.plot(algorithm="keras") if arg.p and arg.keras else None
+
+
+def som(path):
+    ai_object = AI()
+    ai_object.read_db(path)
+    # start of segmentation
+    ai_object.classification(algorithm="som") if arg.som else None
+    ai_object.plot(algorithm="som") if arg.p and arg.som else None
+
+
 def main(arg):
     # get url and data with this url
-    url, space, path = URL.get(arg.u)
-    r = requests.get(url)
+    url, space, path, data = get_data(arg.u)
 
     if arg.kmeans:
-        # read data
-        i = io.StringIO(r.text)
-        data = pd.read_csv(i, sep=space, header=None)
-        data = data.to_numpy()
-        # call the initialize function to get the centroids
-
-        centroids = initialize(data, n=arg.n)
-
-        # start of segmentation
-        k_object = K_means()
-        k_object.start(data, centroids, save=arg.save, plot=arg.p)
-        k_object.plot() if arg.p else None
-
-    if arg.keras or arg.som:
-        ai_object = AI()
-        ai_object.read_db(path)
-        ai_object.machine_learning(epochs=arg.l) if arg.l else None
-
-        ai_object.classification(algorithm="keras") if arg.keras else None
-        ai_object.plot(algorithm="keras") if arg.p and arg.keras else None
-
-        ai_object.classification(algorithm="som") if arg.som else None
-        ai_object.plot(algorithm="som") if arg.p and arg.som else None
+        k_means(data, arg)
+    if arg.fuzzy:
+        fuzzy(data, arg)
+    if arg.som:
+        keras(path)
+    if arg.som:
+        keras(path)
 
 
 if __name__ == '__main__':
@@ -81,6 +104,7 @@ if __name__ == '__main__':
     parser.add_argument("-km", "--kmeans", help="Use K-means algorithm", action="store_true")
     parser.add_argument("-kr", "--keras", help="Use neural network from keras libraries", action="store_true")
     parser.add_argument("-som", "--som", help="Use SOM algorithm - Self-organizing feature map", action="store_true")
+    parser.add_argument("-f", "--fuzzy", help="Use SOM algorithm - Self-organizing feature map", action="store_true")
 
     parser.add_argument("-u", help="Data:  S1 - get data with 'http://cs.joensuu.fi/sipu/datasets/s1.txt';"
                                    "       Breast - get data with 'http://cs.joensuu.fi/sipu/datasets/breast.txt' ;"
@@ -92,5 +116,7 @@ if __name__ == '__main__':
         arg.u = arg.u[0]
     if type(arg.l) is list:
         arg.l = arg.l[0]
+    if type(arg.n) is list:
+        arg.n = arg.n[0]
 
     main(arg)

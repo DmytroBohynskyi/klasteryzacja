@@ -1,41 +1,55 @@
+import sys
+
 import numpy as np
 from numpy import savetxt
-
 from scrips.Plot import plot_k_means
-
-COLOR = ["#ffce00", "#5f720f", "#6c235f", "#69173a", "#0a70cf", "#89ff33", "#2f82d5", "#d47332", "#a8255d", "#653244",
-         "#7a1717", "#336f3b", "#006de1", "#1f0a1b", "#751a41", ]
+import skfuzzy as fuzz
 
 
 class K_means:
-
-    def __init__(self, ):
-
-        self.data = None  # numpy array of data points
-        self.centroids = None  # position of centroids
-        self.classes_num = None
-        self.dimension = None
+    def __init__(self, data, classes_num, plot=False):
+        self.data: np.ndarray = data  # numpy array of data points
+        self.classes_num: int = classes_num
+        self.centroids: np.ndarray = self.initialize(data, classes_num)  # position of centroids
+        self.dimension = data.shape[1]
         self.save_path = None
         self.save_data = None
         self.data_type = None
 
-    def start(self, data: np.ndarray, centroids: np.ndarray, **kwargs):
+    @staticmethod
+    def initialize(data, n, plot=False):
+        """
+        initialized the centroids for K-means++
+        inputs:
+                 data - numpy array of data points having shape (200, 2)
+                 k - number of clusters
+        """
+        # initialize the centroids list and add
+        # a randomly selected data point to the list
+        centroids = [data[np.random.randint(data.shape[0]), :]]
+
+        # compute remaining k - 1 centroids
+        for c_id in range(n - 1):
+            # initialize a list to store distances of data
+
+            dist = K_means.sort_by_distance(data, centroids)
+
+            # select data point with maximum distance as our next centroid
+            dist = np.min(dist, axis=1)
+            next_centroid = data[np.argmax(dist), :]
+            centroids.append(next_centroid)
+
+        if plot:
+            plot_k_means(data, np.array(centroids))
+        return np.array(centroids)
+
+    def k_means(self, **kwargs):
         """
         start of segmentation ( K-means++)
         inputs:
                  data - numpy array of data points having shape (200, 2)
                  centroids - position of centroids
         """
-        self.data: np.ndarray = data
-        self.centroids: np.ndarray = centroids
-        self.classes_num = centroids.shape[0]
-        self.dimension = data.shape[1]
-
-        self.start_algorithm()
-        self.plot() if kwargs.get('plot') else None
-        self.save() if kwargs.get("save") else None
-
-    def start_algorithm(self):
         # variables for comparing segmentation results
         new_array, old_array = 1, 0
         # main loop, if new_array equal old_array stop loop
@@ -45,27 +59,38 @@ class K_means:
             # sort_by_distance, looking for distances to centroid
             new_array = self.sort_by_distance()
             # looking for the nearest centroid
-            data_type = np.argmin(new_array, axis=1)
+            self.data_type = np.argmin(new_array, axis=1)
 
-            self.clustering_empty(data_type)
-        self.data_type = data_type
-        self.save_data = np.append(self.data.T, [data_type], axis=0).T
+            self.clustering_empty()
 
-    def sort_by_distance(self):
-        array = np.zeros([len(self.data), len(self.centroids)])
-        for n_centroid, centroid in enumerate(self.centroids):
-            array[:, n_centroid] = np.power(np.sum((self.data - centroid) ** 2, axis=1), 0.5)
+        self.plot(label=f"K_means: cluster = {self.classes_num}") if kwargs.get('plot') else None
+        self.save() if kwargs.get("save") else None
+
+    @staticmethod
+    def sort_by_distance(data, centroids):
+        array = np.zeros([len(data), len(centroids)])
+        for n_centroid, centroid in enumerate(centroids):
+            array[:, n_centroid] = np.power(np.sum((data - centroid) ** 2, axis=1), 0.5)
         return array
 
-    def clustering_empty(self, data_type: np.ndarray):
+    def clustering_empty(self):
         for n, centroid in enumerate(self.centroids):
-            data_type_index = np.where(data_type == n)  # index value for n centroid
+            data_type_index = np.where(self.data_type == n)  # index value for n centroid
             if len(data_type_index[0]) != 0:  # next if n centroid dont have value
                 self.centroids[n] = np.average(self.data[data_type_index], axis=0)
 
-    def plot(self):
-        plot_k_means(self.data, self.centroids, color=self.data_type, fig_type="K_means")
+    def fuzzy(self):
+        cntr, u, u0, d, jm, p, fpc = fuzz.cluster.cmeans(self.data.T, self.classes_num, self.dimension,
+                                                         error=0.005, maxiter=1000, init=None)
+        self.data_type = np.argmax(u, axis=0)
+        self.centroids = cntr
+
+        self.plot(label="Fuzzy_means")
+
+    def plot(self, label="K_means"):
+        plot_k_means(self.data, self.centroids, color=self.data_type, fig_type=label)
 
     def save(self):
+        self.save_data = np.append(self.data.T, [self.data_type], axis=0).T
         self.save_path = f'models/K_means_{self.classes_num}_{self.dimension}.csv'
         np.savetxt(self.save_path, self.save_data, delimiter=',')
