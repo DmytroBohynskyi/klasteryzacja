@@ -12,10 +12,14 @@ optional arguments:
   -l L            Learn neural network, epochs number
   -save           Save dana in csv
   -km, --kmeans   Use K-means algorithm
+  -anf, --anfis   Use Anfis algorithm
   -kr, --keras    Use neural network from keras libraries
   -som, --som     Use SOM algorithm - Self-organizing feature map
   -f, --fuzzy     Use SOM algorithm - Self-organizing feature map
-  -u {S1,Breast}  Data: S1 - get data with 'http://cs.joensuu.fi/sipu/datasets/s1.txt'; Breast - get data with 'http://cs.joensuu.fi/sipu/datasets/breast.txt' ;Default: S1
+  -u {S1,Breast}  Data: S1 - get data with
+                  'http://cs.joensuu.fi/sipu/datasets/s1.txt'; Breast - get
+                  data with 'http://cs.joensuu.fi/sipu/datasets/breast.txt'
+                  ;Default: S1
 """
 
 import argparse
@@ -23,6 +27,8 @@ import io
 
 import pandas as pd
 import requests
+from numpy import genfromtxt
+
 from scrips.K_means import K_means
 from scrips.Network import AI
 
@@ -46,7 +52,7 @@ def get_data(url):
 def k_means(data, arg):
     # call the initialize function to get the centroids
     k_object = K_means(data, classes_num=arg.n, plot=arg.p)
-    k_object.fuzzy()
+    k_object.k_means(save=arg.save)
     # start of segmentation
     k_object.plot() if arg.p else None
 
@@ -77,6 +83,15 @@ def som(path):
     ai_object.plot(algorithm="som") if arg.p and arg.som else None
 
 
+def anfis(data, arg):
+    types = genfromtxt('models/anfis_clusters.txt')
+
+    k_object = K_means(data, classes_num=int(max(types)), plot=arg.p, data_type=types)
+    k_object.clustering_empty()
+    # start of segmentation
+    k_object.plot(label="Anfis") if arg.p else None
+
+
 def main(arg):
     # get url and data with this url
     url, space, path, data = get_data(arg.u)
@@ -85,10 +100,13 @@ def main(arg):
         k_means(data, arg)
     if arg.fuzzy:
         fuzzy(data, arg)
+    if arg.anfis:
+        anfis(data, arg)
     if arg.som:
         keras(path)
     if arg.som:
         keras(path)
+
 
 
 if __name__ == '__main__':
@@ -102,6 +120,7 @@ if __name__ == '__main__':
     parser.add_argument('-save', help="Save dana in csv", action="store_true")
 
     parser.add_argument("-km", "--kmeans", help="Use K-means algorithm", action="store_true")
+    parser.add_argument("-anf", "--anfis", help="Use Anfis algorithm", action="store_true")
     parser.add_argument("-kr", "--keras", help="Use neural network from keras libraries", action="store_true")
     parser.add_argument("-som", "--som", help="Use SOM algorithm - Self-organizing feature map", action="store_true")
     parser.add_argument("-f", "--fuzzy", help="Use SOM algorithm - Self-organizing feature map", action="store_true")

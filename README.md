@@ -35,10 +35,14 @@ optional arguments:
   -l L            Learn neural network, epochs number
   -save           Save dana in csv
   -km, --kmeans   Use K-means algorithm
+  -anf, --anfis   Use Anfis algorithm
   -kr, --keras    Use neural network from keras libraries
   -som, --som     Use SOM algorithm - Self-organizing feature map
   -f, --fuzzy     Use SOM algorithm - Self-organizing feature map
-  -u {S1,Breast}  Data: S1 - get data with 'http://cs.joensuu.fi/sipu/datasets/s1.txt'; Breast - get data with 'http://cs.joensuu.fi/sipu/datasets/breast.txt' ;Default: S1
+  -u {S1,Breast}  Data: S1 - get data with
+                  'http://cs.joensuu.fi/sipu/datasets/s1.txt'; Breast - get
+                  data with 'http://cs.joensuu.fi/sipu/datasets/breast.txt'
+                  ;Default: S1
 
 ```
 
@@ -109,3 +113,21 @@ w tym celu urzywam biblioteke ''susi''. Flaga ''-som, --som''.
 SOM: klas-15, wymiar-2 | SOM: klas-2, wymiar-9
 :-------------------------------------:|:-------------------------:
 ![alt-text-1](images/som_2_2.png "SOM: klas-15, wymiar-2 ") | ![alt-text-2](images/som_9_9.png "SOM: klas-2, wymiar-9")
+
+### Fuzzy
+
+```commandline
+python main.py -anf 
+```
+
+albo 
+
+```commandline
+python main.py -anfis
+```
+
+Wyniki możemy zobaczyć poniższych rysunkach:
+
+ Fuzzy: klas-15, wymiar-2 |
+:--------------------------:
+![alt-text-1](images/Anfis_2_2.png "Anfis: klas-15, wymiar-2 ") 

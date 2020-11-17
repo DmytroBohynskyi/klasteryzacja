@@ -1,20 +1,18 @@
-import sys
-
 import numpy as np
-from numpy import savetxt
-from scrips.Plot import plot_k_means
 import skfuzzy as fuzz
+
+from scrips.Plot import plot_k_means
 
 
 class K_means:
-    def __init__(self, data, classes_num, plot=False):
+    def __init__(self, data, classes_num, plot=False, data_type=None):
         self.data: np.ndarray = data  # numpy array of data points
         self.classes_num: int = classes_num
         self.centroids: np.ndarray = self.initialize(data, classes_num)  # position of centroids
         self.dimension = data.shape[1]
         self.save_path = None
         self.save_data = None
-        self.data_type = None
+        self.data_type = data_type
 
     @staticmethod
     def initialize(data, n, plot=False):
@@ -57,7 +55,7 @@ class K_means:
             old_array = new_array
 
             # sort_by_distance, looking for distances to centroid
-            new_array = self.sort_by_distance()
+            new_array = self.sort_by_distance(self.data, self.centroids)
             # looking for the nearest centroid
             self.data_type = np.argmin(new_array, axis=1)
 
@@ -91,6 +89,7 @@ class K_means:
         plot_k_means(self.data, self.centroids, color=self.data_type, fig_type=label)
 
     def save(self):
-        self.save_data = np.append(self.data.T, [self.data_type], axis=0).T
+        save_data = np.append(self.data.T, [self.data_type], axis=0).T
+        self.save_data = save_data[save_data[:, 2].argsort()]  # sort by type
         self.save_path = f'models/K_means_{self.classes_num}_{self.dimension}.csv'
         np.savetxt(self.save_path, self.save_data, delimiter=',')

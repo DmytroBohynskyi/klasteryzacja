@@ -1,12 +1,10 @@
-import keras
 import numpy as np
 import susi
-from numpy import loadtxt
-from sklearn.model_selection import train_test_split
 from keras.layers import Dense, Input
 from keras.models import Model, load_model
 from keras.utils import to_categorical
-
+from numpy import loadtxt
+from sklearn.model_selection import train_test_split
 
 from scrips.Plot import plot_k_means
 
@@ -48,6 +46,14 @@ class AI:
         """
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x, self.data_type, random_state=5,
                                                                                 stratify=self.data_type)
+
+    def save_train(self):
+        self.train_test()
+        save_train = np.append(self.x_train.T, [self.y_train], axis=0).T
+        save_test = np.append(self.x_test.T, [self.y_test], axis=0).T
+
+        np.savetxt(f'models/train_data.csv', save_train, delimiter=',')
+        np.savetxt(f'models/test_data.csv', save_test, delimiter=',')
 
     def machine_learning(self, epochs: int = 50):
         height, width = self.data.shape
@@ -100,9 +106,3 @@ class AI:
             if len(data_type_index[0]) != 0:  # next if n centroid dont have value
                 centroids[n, :] = np.average(self.data[data_type_index], axis=0)
         return centroids
-
-
-
-
-
-
